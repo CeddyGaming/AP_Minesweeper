@@ -3,7 +3,6 @@ Minesweeper Recreation
 AP Computer Science Principals
 
 Cedric Tabban
-@Ceddygaming
 '''
 # Import modules for minesweeper
 import pygame
