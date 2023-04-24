@@ -62,8 +62,8 @@ def set_around_mines(pos):
   for cord in neighbor_cords:
     if (0 <= cord[0]) and (cord[0] <= amount_of_rows - 1):
       if (0 <= cord[1]) and (cord[1] <= amount_of_rows - 1):
-        squares[cord[0]][cord[1]]["mines_amount"] = squares[cord[0]][
-          cord[1]]["mines_amount"] + 1
+        if not square["is_mine"]:
+          squares[cord[0]][cord[1]]["mines_amount"] += 1
 
 
 def remove_empty_squares(pos, exempt_squares=()):
@@ -98,17 +98,11 @@ def begin_game(square_pressed):
       mass_square_list.append(col["rectangle"])
   # Randomize mines, count mines around each square.
   random_mine_list = random.sample(mass_square_list, number_of_mines)
-  row_number = 0
-  for row in squares:
-    col_number = 0
-    for col in row:
-      for mine in random_mine_list:
-        if (col["rectangle"].top == mine.top) and (col["rectangle"].left
-                                                   == mine.left):
-          col["is_mine"] = True
-          set_around_mines((row_number, col_number))
-      col_number += 1
-    row_number += 1
+  for mine in random_mine_list:
+    square = get_square_from_pos((mine.top, mine.left))
+    position_in_dict = get_index_from_square(square)
+    square["is_mine"] = True
+    set_around_mines(position_in_dict)
   remove_empty_squares(get_index_from_square(square_pressed))
 
 
@@ -156,30 +150,25 @@ for row in squares:
 
 
 def end_game(win):
-  information_rectangle = pygame.Rect(screen_resolution / 4,
-                                      screen_resolution / 4,
-                                      screen_resolution / 2,
-                                      screen_resolution / 2 - 20)
-  pygame.draw.rect(screen, pygame.Color(255, 255, 255), information_rectangle)
-  text = fontBig.render("You win!", True, "Black")
+  text = fontBig.render("You lose!", True, "Black")
   text_rect = text.get_rect(center=screen.get_rect().center)
   screen.blit(text, text_rect)
-
+  for row in squares:
+    for col in row: 
+      if col["is_mine"]:
+        pygame.draw.rect(screen, "Blue", col["rectangle"])
 
 # GAME LOOP
 while True:
   if is_game:
     for row in squares:
       for col in row:
-        if col["is_mine"]:
-          pygame.draw.rect(screen, pygame.Color(0, 0, 255), col["rectangle"])
-          col["color"] = pygame.Color(0, 0, 255)
-        elif col["is_cleared"]:
+        if col["is_cleared"]:
           pygame.draw.rect(screen, "White", col["rectangle"])
-        text = font.render(str(col["mines_amount"]), True, "Black")
-        position_rectangle = text.get_rect()
-        position_rectangle.center = col["rectangle"].center
-        screen.blit(text, position_rectangle)
+          text = font.render(str(col["mines_amount"]), True, "Black")
+          position_rectangle = text.get_rect()
+          position_rectangle.center = col["rectangle"].center
+          screen.blit(text, position_rectangle)
   for event in pygame.event.get():
     if event.type == QUIT:
       pygame.quit()
@@ -201,9 +190,10 @@ while True:
             square["is_flagged"] = False
         elif square["is_mine"]:
           end_game(False)
-        
-        
-      
+        elif square["mines_amount"] == 0:
+          remove_empty_squares(get_index_from_square(square))
+        else:
+          square["is_cleared"] = True
       else:
         begin_game(square)
         is_game = True
