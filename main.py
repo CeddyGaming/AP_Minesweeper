@@ -30,7 +30,7 @@ color_dictionary = {
 }
 
 # INITIALIZE GAME
-# This area of the program will initialize all of pygame's modules, set up a screen, and our bottom info rectangle.
+# This area of the program will set up a screen, and our bottom info rectangle.
 screen = pygame.display.set_mode(size=(screen_resolution, screen_resolution + bottom_rectangle_y), flags=pygame.SCALED)
 timer_event = USEREVENT
 font = pygame.font.SysFont("comicsansms", 14)
