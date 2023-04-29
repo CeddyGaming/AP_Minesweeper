@@ -22,11 +22,12 @@ bottom_rectangle_y = 20
 size_of_square = screen_resolution / amount_of_rows
 number_of_mines = 60
 color_dictionary = {
-    "square_accent_1": pygame.Color(107, 40, 40),  # Maroon
-    "square_accent_2": pygame.Color(128, 128, 128),  # Gray
-    "mine": pygame.Color(104, 182, 242),  # Light Blue
+    "square_accent_1": pygame.Color(75, 5, 5),  # Dark Red
+    "square_accent_2": pygame.Color(90, 10, 5),  # Bright Red
+    "mine": pygame.Color(255, 0, 0),  # Light Blue
     "completed_square": pygame.Color(255, 255, 255),  # White
-    "text_color": pygame.Color(0, 0, 0)  # Black
+    "text_color": pygame.Color(0, 0, 0),  # Black
+    "information_color": pygame.Color(255, 255, 255)  # White
 }
 
 # INITIALIZE GAME
@@ -40,12 +41,12 @@ red_x_image = pygame.image.load(os.path.join("red_x_large.png")).convert_alpha()
 pygame.display.set_caption('Minesweeper')
 
 information_rectangle = pygame.Rect((0, screen_resolution), (screen_resolution, bottom_rectangle_y))
-pygame.draw.rect(screen, pygame.Color(255, 255, 255), information_rectangle)
+pygame.draw.rect(screen, color_dictionary["information_color"], information_rectangle)
 
-timer_info_text = font.render("Timer: ", True, "Black")
-timer_text = font.render("0", True, "Black")
-flags_info_text = font.render("Flags Left: ", True, "Black")
-flags_text = font.render(str(number_of_mines), True, "Black")
+timer_info_text = font.render("Timer: ", True, color_dictionary["text_color"])
+timer_text = font.render("0", True, color_dictionary["text_color"])
+flags_info_text = font.render("Flags Left: ", True, color_dictionary["text_color"])
+flags_text = font.render(str(number_of_mines), True, color_dictionary["text_color"])
 
 # GAME SESSION VARIABLES
 is_game = False
@@ -58,18 +59,18 @@ squares = []
 # FUNCTIONS
 def reanimate_bottom_rectangle():
     global timer_info_text, timer_text, flags_info_text, flags_text, timer, flags_left
-    pygame.draw.rect(screen, pygame.Color(255, 255, 255), information_rectangle)
-    timer_text = font.render(str(timer), True, "Black")
-    flags_text = font.render(str(flags_left), True, "Black")
-    screen.blit(timer_info_text,
-                (information_rectangle.left + 10, information_rectangle.top + information_rectangle.height / 4))
+    pygame.draw.rect(screen, color_dictionary["information_color"], information_rectangle)
+    timer_text = font.render(str(timer), True, color_dictionary["text_color"])
+    flags_text = font.render(str(flags_left), True, color_dictionary["text_color"])
+    screen.blit(timer_info_text, (information_rectangle.left + 10, information_rectangle.top + (
+                information_rectangle.height - timer_info_text.get_size()[1]) / 2))
     screen.blit(timer_text, (information_rectangle.left + timer_info_text.get_size()[0] + 10,
-                             information_rectangle.top + information_rectangle.height / 4))
+                             information_rectangle.top + (information_rectangle.height - timer_text.get_size()[1]) / 2))
     screen.blit(flags_info_text, (
     information_rectangle.right - flags_text.get_size()[0] - flags_info_text.get_size()[0] - 10,
-    information_rectangle.top + information_rectangle.height / 4))
+    information_rectangle.top + (information_rectangle.height - timer_text.get_size()[1]) / 2))
     screen.blit(flags_text, (information_rectangle.right - flags_text.get_size()[0] - 10,
-                             information_rectangle.top + information_rectangle.height / 4))
+                             information_rectangle.top + (information_rectangle.height - timer_text.get_size()[1]) / 2))
 
 
 def get_square_from_pos(pos):
@@ -162,6 +163,7 @@ def begin_game(square_pressed):
 
 end_game_rectangle = pygame.Rect((screen_resolution / 4, screen_resolution / 4),
                                  (screen_resolution / 2, screen_resolution / 2 - 20))
+transparent_surface = pygame.Surface(end_game_rectangle.size, pygame.SRCALPHA)
 
 
 def end_game(win):
@@ -173,21 +175,23 @@ def end_game(win):
         for row in squares:
             for col in row:
                 if col["is_mine"] and not col["is_flagged"]:
-                    pygame.draw.rect(screen, pygame.Color(0, 0, 255), col["rectangle"])
-                    col["color"] = pygame.Color(0, 0, 255)
+                    pygame.draw.rect(screen, color_dictionary["mine"], col["rectangle"])
+                    col["color"] = color_dictionary["mine"]
                 if col["is_flagged"] and not col["is_mine"]:
                     wrong_mine_image = pygame.transform.scale(red_x_image, (size_of_square, size_of_square))
                     screen.blit(wrong_mine_image, (col["rectangle"].left, col["rectangle"].top))
-        pygame.draw.rect(screen, pygame.Color(255, 255, 255), end_game_rectangle)
-        text = font_big.render("You lose!", True, "Black")
+
+        text = font_big.render("You lose!", True, color_dictionary["text_color"])
         text_rect = text.get_rect(center=end_game_rectangle.center)
+        pygame.draw.rect(transparent_surface, pygame.Color(255, 255, 255, 210), transparent_surface.get_rect())
+        screen.blit(transparent_surface, end_game_rectangle)
         screen.blit(text, text_rect)
     else:
-        pygame.draw.rect(screen, pygame.Color(255, 255, 255), end_game_rectangle)
-        text = font_big.render("You win!", True, "Black")
+        text = font_big.render("You win!", True, color_dictionary["text_color"])
         text_rect = text.get_rect(center=end_game_rectangle.center)
+        pygame.draw.rect(transparent_surface, pygame.Color(255, 255, 255, 210), transparent_surface.get_rect())
+        screen.blit(transparent_surface, end_game_rectangle)
         screen.blit(text, text_rect)
-
 
 
 def reset_game():
@@ -195,7 +199,6 @@ def reset_game():
     flags_left = number_of_mines
     squares = []
     timer = 0
-    print("run")
     # Reset squares
     for row in range(amount_of_rows):
         RowOfSquares = []
@@ -221,24 +224,29 @@ def reset_game():
         for col in range(len(row)):
             if rowindex % 2:
                 if col % 2:
-                    pygame.draw.rect(screen, "Red", row[col]["rectangle"])
-                    row[col]["color"] = "Red"
+                    pygame.draw.rect(screen, color_dictionary["square_accent_1"], row[col]["rectangle"])
+                    row[col]["color"] = color_dictionary["square_accent_1"]
                 else:
-                    pygame.draw.rect(screen, "Gray", row[col]["rectangle"])
-                    row[col]["color"] = "Gray"
+                    pygame.draw.rect(screen, color_dictionary["square_accent_2"], row[col]["rectangle"])
+                    row[col]["color"] = color_dictionary["square_accent_2"]
             else:
                 if col % 2:
-                    pygame.draw.rect(screen, "Gray", row[col]["rectangle"])
-                    row[col]["color"] = "Gray"
+                    pygame.draw.rect(screen, color_dictionary["square_accent_2"], row[col]["rectangle"])
+                    row[col]["color"] = color_dictionary["square_accent_2"]
                 else:
-                    pygame.draw.rect(screen, "Red", row[col]["rectangle"])
-                    row[col]["color"] = "Red"
+                    pygame.draw.rect(screen, color_dictionary["square_accent_1"], row[col]["rectangle"])
+                    row[col]["color"] = color_dictionary["square_accent_1"]
         rowindex += 1
     reanimate_bottom_rectangle()
-    print("done")
 
 
 reset_game()
+text = font.render("Begin by clicking a square.", True, color_dictionary["text_color"])
+text_rect = text.get_rect(center=end_game_rectangle.center)
+pygame.draw.rect(transparent_surface, pygame.Color(255, 255, 255, 210), transparent_surface.get_rect())
+screen.blit(transparent_surface, end_game_rectangle)
+screen.blit(text, text_rect)
+
 # GAME LOOP
 while True:
     is_game_won = True
@@ -246,12 +254,13 @@ while True:
         for row in squares:
             for col in row:
                 if col["is_cleared"]:
-                    pygame.draw.rect(screen, pygame.Color(255, 255, 255), col["rectangle"])
-                    col["color"] = pygame.Color(255, 255, 255)
-                    text = font.render(str(col["mines_amount"]), True, "Black")
-                    position_rectangle = text.get_rect()
-                    position_rectangle.center = col["rectangle"].center
-                    screen.blit(text, position_rectangle)
+                    pygame.draw.rect(screen, color_dictionary["completed_square"], col["rectangle"])
+                    col["color"] = color_dictionary["completed_square"]
+                    if col["mines_amount"] != 0:
+                        text = font.render(str(col["mines_amount"]), True, color_dictionary["text_color"])
+                        position_rectangle = text.get_rect()
+                        position_rectangle.center = col["rectangle"].center
+                        screen.blit(text, position_rectangle)
                 elif not col["is_cleared"] and not col["is_mine"]:
                     is_game_won = False
         if is_game_won:
